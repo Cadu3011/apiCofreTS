@@ -2,7 +2,10 @@ import { Request, Response } from "express";
 import { FilialServices } from "../services/cofreService";
     export class cofreController{
         static addFilialCofre = async(req: Request, res: Response):Promise<void>=>{
-            const {nome, saldo, despesa, deposito, sangria, outras_entradas} = req.body;
+            const {nome, saldo, despesa, deposito, sangria, outras_entradas,movimentos} = req.body;
+            console.log(req.body.movimentos)
+            console.log(req.body.nome)
+           
              const result = await FilialServices.addFilialCofre(req.body)
             if(result == true){
                 res.status(201).send({message: "saldo lançado com sucesso!"});
@@ -18,6 +21,14 @@ import { FilialServices } from "../services/cofreService";
         static saldoAnterior = async(req: Request, res: Response):Promise<any>=>{
             const nome = req.query.nome as string;
             const listFiliais = await FilialServices.filterFilialAnterior(nome)
+               
+                if(listFiliais == false){
+                    return res.status(400).json("nenhuma filial existente")
+                }return res.status(200).json(listFiliais)
+        }
+        static movimentosCofre = async(req: Request, res: Response):Promise<any>=>{
+            const id = req.query.id
+            const listFiliais = await FilialServices.getMovimentos(id)
                
                 if(listFiliais == false){
                     return res.status(400).json("nenhuma filial existente")

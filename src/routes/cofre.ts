@@ -14,6 +14,7 @@ router.use((req, res, next) => {
   });
 
 router.get('/listCofre',(cofreController.listSaldos))
+router.get('/listMoves',(cofreController.movimentosCofre))
 router.get('/saldoAnt',(cofreController.saldoAnterior))
 router.post('/addCofre',(cofreController.addFilialCofre))
 router.put('/conferSaldo',(cofreController.conferSaldoFilial))

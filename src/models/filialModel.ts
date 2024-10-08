@@ -7,8 +7,10 @@ interface FilialData{
     deposito:number,
     sangria:number,
     outras_entradas:number,
+    movimentos:JSON
     status?:boolean,
     date?:Date
+
 }
 export class FilialModel{
     id?:number
@@ -18,9 +20,10 @@ export class FilialModel{
     deposito:number
     sangria:number
     outras_entradas:number
+    movimentos:JSON
     status?:boolean
     date?:Date
-    constructor(nome:string, saldo:number, despesa:number, deposito:number,sangria:number,outras_entradas:number,status?:boolean, id?:number ,date?:Date){
+    constructor(nome:string, saldo:number, despesa:number, deposito:number,sangria:number,outras_entradas:number, movimentos:JSON,status?:boolean, id?:number ,date?:Date){
         this.id =id
         this.nome = nome;
         this.saldo = saldo
@@ -29,6 +32,7 @@ export class FilialModel{
         this.date = date
         this.sangria = sangria
         this.outras_entradas = outras_entradas
+        this.movimentos = movimentos
         this.status= status
     }
     public conferDataFilial(data:FilialData):boolean{
@@ -43,8 +47,9 @@ export class FilialModel{
     }   
     public addFilialCofreBD = async(data:FilialData):Promise<void>=>{
         const date = new Date
-        const query = pool.execute(`INSERT INTO filial (nome, saldo, despesa, deposito,sangria, data_evento, outras_entradas) values (?,?,?,?,?,?,?)`,
-            [data.nome, data.saldo, data.despesa, data.deposito,data.sangria, date , data.outras_entradas])
+        
+        const query = pool.execute(`INSERT INTO filial (nome, saldo, despesa, deposito,sangria, data_evento, outras_entradas,movimentos) values (?,?,?,?,?,?,?,?)`,
+            [data.nome, data.saldo, data.despesa, data.deposito,data.sangria, date , data.outras_entradas, data.movimentos])
     }
     static statusFilialCofreBD = async(status:string, id:number):Promise<boolean>=>{
         try {
@@ -54,6 +59,14 @@ export class FilialModel{
             console.error('Erro ao executar a consulta:', error);
             return false
         }
+    }
+    static getMovimentosDB= async(id:any):Promise<FilialData[] | false>=>{
+        const [rows] = await pool.query(
+            'SELECT movimentos FROM filial WHERE id = ?',
+            [id]
+        );
+        const filial = rows as FilialData[]
+        return filial;
     }
     static filterFiliaisNomeBD = async (data:string):Promise<FilialData[] | false>=>{
             // Começa com a consulta base

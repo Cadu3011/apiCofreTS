@@ -1,7 +1,7 @@
 import { FilialModel} from '../models/filialModel'
 export class FilialServices{
     static addFilialCofre = async(data:FilialModel):Promise<boolean>=>{
-        const filial = new FilialModel(data.nome, data.saldo,data.despesa,data.deposito,data.sangria, data.outras_entradas)
+        const filial = new FilialModel(data.nome, data.saldo,data.despesa,data.deposito,data.sangria, data.outras_entradas,data.movimentos)
         if(filial.conferDataFilial(filial)==true ){ 
          await filial.addFilialCofreBD(filial)
          return true
@@ -39,9 +39,16 @@ export class FilialServices{
                 return listFiliais as FilialModel[] ;
             }
             return false;
-        
-       
     };
+    static getMovimentos = async (id: any): Promise<FilialModel[] | false> => {
+        
+        const listFiliais = await FilialModel.getMovimentosDB(id);
+        
+        if (listFiliais !== false) {
+            return listFiliais as FilialModel[] ;
+        }
+        return false;
+};
     static filterFiliaisNome = async (nome: string): Promise<FilialModel[] | false> => {
         if (nome) {
             const listFiliais = await FilialModel.filterFiliaisNomeBD(nome);
