@@ -3,8 +3,6 @@ import { FilialServices } from "../services/cofreService";
     export class cofreController{
         static addFilialCofre = async(req: Request, res: Response):Promise<void>=>{
             const {nome, saldo, despesa, deposito, sangria, outras_entradas,movimentos} = req.body;
-            console.log(req.body.movimentos)
-            console.log(req.body.nome)
            
              const result = await FilialServices.addFilialCofre(req.body)
             if(result == true){
