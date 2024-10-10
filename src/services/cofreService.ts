@@ -2,9 +2,17 @@ import { FilialModel} from '../models/filialModel'
 export class FilialServices{
     static addFilialCofre = async(data:FilialModel):Promise<boolean>=>{
         const filial = new FilialModel(data.nome, data.saldo,data.despesa,data.deposito,data.sangria, data.outras_entradas,data.movimentos)
+        const conferExist = await filial.conferExistCofre(filial)
         if(filial.conferDataFilial(filial)==true ){ 
-         await filial.addFilialCofreBD(filial)
+            if(conferExist !=false){
+                await filial.deleteCofre(filial)
+                await filial.addFilialCofreBD(filial)
          return true
+            }else{
+                await filial.addFilialCofreBD(filial)
+                return true
+            }
+            
         }return false
     }
     static  statusFilialCofre= async(status:boolean,id:number):Promise<void>=>{

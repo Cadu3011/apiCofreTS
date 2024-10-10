@@ -45,6 +45,21 @@ export class FilialModel{
             return true
         }return false
     }   
+    public conferExistCofre = async(data:FilialData):Promise<FilialData[] | false>=>{
+        const date = new Date
+        const [rows] = await pool.query(
+            'SELECT * FROM filial WHERE data_evento = ? and nome = ?',
+            [date,data.nome]
+        );
+        const filial = rows as FilialData[]
+        return filial;
+    }
+    public deleteCofre = async(data:FilialData):Promise<void>=>{
+        await pool.query(
+            'DELETE FROM filial WHERE data = ? AND nome =? ',
+            [data.date,data.nome]
+        );
+    }
     public addFilialCofreBD = async(data:FilialData):Promise<void>=>{
         const date = new Date
         
