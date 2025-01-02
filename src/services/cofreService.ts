@@ -1,19 +1,27 @@
-import { FilialModel} from '../models/filialModel'
+import { FilialModel, FilialData} from '../models/filialModel'
 export class FilialServices{
-    static addFilialCofre = async(data:FilialModel):Promise<boolean>=>{
+    static addFilialCofre = async(data:FilialModel):Promise<boolean | FilialData>=>{
         const filial = new FilialModel(data.nome, data.saldo,data.despesa,data.deposito,data.sangria, data.outras_entradas,data.movimentos)
         const conferExist = await filial.conferExistCofre(filial)
-        if(filial.conferDataFilial(filial)==true ){ 
-            if(conferExist !=false){
-                await filial.deleteCofre(filial)
-                await filial.addFilialCofreBD(filial)
-         return true
-            }else{
-                await filial.addFilialCofreBD(filial)
+        if(filial.conferDataFilial(filial)==true){ 
+            if(conferExist ==false){
+                 await filial.addFilialCofreBD(filial)
+                return true 
+            }else{ 
+                await FilialModel.editFilialCofreBD(filial)
                 return true
-            }
+            } 
             
-        }return false
+        }return false 
+    }
+    static DeleteSaldoAtual= async(nome:String):Promise<Boolean>=>{
+        const saldoDeleted = await FilialModel.deleteCofreDB(nome)
+        
+        if(saldoDeleted){
+            return true
+        }
+            return false
+        
     }
     static  statusFilialCofre= async(status:boolean,id:number):Promise<void>=>{
         if(status === true){
@@ -56,7 +64,25 @@ export class FilialServices{
             return listFiliais as FilialModel[] ;
         }
         return false;
-};
+    };
+    static getMovimentoAtuais = async (nome:string): Promise<FilialModel[] | false> => {
+        
+        const listFiliais = await FilialModel.getMovimentosAtualDB(nome);
+        
+        if (listFiliais !== false) {
+            return listFiliais as FilialModel[] ;
+        }
+        return false;
+    };
+    static getLastMovimentos = async (name:string): Promise<FilialModel[] | false> => {
+        
+        const listFiliais = await FilialModel.getLastMovimentosDB(name);
+        
+        if (listFiliais !== false) {
+            return listFiliais as FilialModel[] ;
+        }
+        return false;
+    };
     static filterFiliaisNome = async (nome: string): Promise<FilialModel[] | false> => {
         if (nome) {
             const listFiliais = await FilialModel.filterFiliaisNomeBD(nome);

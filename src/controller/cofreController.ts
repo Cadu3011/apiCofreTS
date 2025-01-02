@@ -5,10 +5,20 @@ import { FilialServices } from "../services/cofreService";
             const {nome, saldo, despesa, deposito, sangria, outras_entradas,movimentos} = req.body;
            
              const result = await FilialServices.addFilialCofre(req.body)
-            if(result == true){
-                res.status(201).send({message: "saldo lançado com sucesso!"});
+            if(result != false){
+                res.status(201).send({message: "saldo lançado com sucesso!",cofre: result});
             }else{
-                res.status(400).send({message: "Erro ao lançar saldo!"});
+                res.status(400).send({message: "Erro ao lançar saldo! Caso ja exista um saldo do dia atual delete o saldo existente atualize a pagina e tente novamente"});
+            }
+        }
+        static DeleteSaldoAtual = async(req: Request, res: Response):Promise<void>=>{
+            const nomeSaldo = req.query.nome as String
+            const result =await FilialServices.DeleteSaldoAtual(nomeSaldo)
+            
+            if(result == true){
+                res.status(201).send({message: "saldo Deletado com sucesso!"});
+            }else{
+                res.status(400).send({message: "Erro ao deletar saldo! não ha saldo lançado hoje"});
             }
         }
         static conferSaldoFilial = async(req: Request, res: Response):Promise<void>=>{
@@ -27,6 +37,21 @@ import { FilialServices } from "../services/cofreService";
         static movimentosCofre = async(req: Request, res: Response):Promise<any>=>{
             const id = req.query.id
             const listFiliais = await FilialServices.getMovimentos(id)
+               
+                if(listFiliais == false){
+                    return res.status(400).json("nenhuma filial existente")
+                }return res.status(200).json(listFiliais)
+        }
+        static movimentosAtuaisCofre = async(req: Request, res: Response):Promise<any>=>{
+            const nome = req.query.nome as string;            
+            const listFiliais = await FilialServices.getMovimentoAtuais(nome)
+                if(listFiliais != false){
+                    return res.status(200).json({cofre:listFiliais})
+                }return res.status(400).json("nenhuma filial salva hoje")
+        }
+        static movimentoAnteriorCofre = async(req: Request, res: Response):Promise<any>=>{
+            const nome = req.query.nome as string;
+            const listFiliais = await FilialServices.getLastMovimentos(nome)
                
                 if(listFiliais == false){
                     return res.status(400).json("nenhuma filial existente")
