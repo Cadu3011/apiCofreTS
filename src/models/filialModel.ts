@@ -197,11 +197,37 @@ export class FilialModel{
     }
     static getLastMovimentosDB= async(name:string):Promise<FilialData[] | false>=>{
         const [rows] = await pool.query(
-            'SELECT movimentos FROM filial WHERE nome = ? ORDER BY id DESC LIMIT 1;',
+            'SELECT movimentos ,data_evento FROM filial WHERE nome = ? ORDER BY id DESC LIMIT 1;',
             [name]
         );
         const filial = rows as FilialData[]
-        return filial;
+        const result = rows as { movimentos: JSON, data_evento: Date }[];
+        const filiaDate = result.map((row: any) => ({
+            data_evento: row.data_evento,
+        }))
+        function formatarData(data:Date) {
+            const ano = data.getFullYear();
+            const mes = (data.getMonth() + 1).toString().padStart(2, '0'); // Mes começa em 0, por isso adiciona 1
+            const dia = data.getDate().toString().padStart(2, '0');
+        
+            return `${ano}-${mes}-${dia}`;
+        }
+        
+        const dataAtual = new Date();
+        const dataFormatadaAtual = formatarData(dataAtual);
+        const dataFormatadaBD = formatarData(filiaDate[0].data_evento)
+        if(dataFormatadaBD != dataFormatadaAtual){
+            return filial;
+        }else{
+            const [rows] = await pool.query(
+                `SELECT movimentos FROM filial WHERE nome = ? AND id < (SELECT MAX(id) FROM filial WHERE nome = ?) 
+        ORDER BY id DESC 
+        LIMIT 1;`,
+        [name, name]
+            );
+            const filial = rows as FilialData[]
+            return filial;
+        }
     }
     static filterFiliaisNomeBD = async (data:string):Promise<FilialData[] | false>=>{
             // Começa com a consulta base
