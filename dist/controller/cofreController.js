@@ -19,8 +19,8 @@ _a = cofreController;
 cofreController.addFilialCofre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { nome, saldo, despesa, deposito, sangria, outras_entradas, movimentos } = req.body;
     const result = yield cofreService_1.FilialServices.addFilialCofre(req.body);
-    if (result == true) {
-        res.status(201).send({ message: "saldo lançado com sucesso!" });
+    if (result != false) {
+        res.status(201).send({ message: "saldo lançado com sucesso!", cofre: result });
     }
     else {
         res.status(400).send({ message: "Erro ao lançar saldo! Caso ja exista um saldo do dia atual delete o saldo existente atualize a pagina e tente novamente" });
@@ -52,6 +52,22 @@ cofreController.saldoAnterior = (req, res) => __awaiter(void 0, void 0, void 0, 
 cofreController.movimentosCofre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.query.id;
     const listFiliais = yield cofreService_1.FilialServices.getMovimentos(id);
+    if (listFiliais == false) {
+        return res.status(400).json("nenhuma filial existente");
+    }
+    return res.status(200).json(listFiliais);
+});
+cofreController.movimentosAtuaisCofre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const nome = req.query.nome;
+    const listFiliais = yield cofreService_1.FilialServices.getMovimentoAtuais(nome);
+    if (listFiliais != false) {
+        return res.status(200).json({ cofre: listFiliais });
+    }
+    return res.status(400).json("nenhuma filial salva hoje");
+});
+cofreController.movimentoAnteriorCofre = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const nome = req.query.nome;
+    const listFiliais = yield cofreService_1.FilialServices.getLastMovimentos(nome);
     if (listFiliais == false) {
         return res.status(400).json("nenhuma filial existente");
     }

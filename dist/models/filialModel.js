@@ -20,13 +20,34 @@ class FilialModel {
             const mes = String(date.getMonth() + 1).padStart(2, '0'); // +1 porque os meses começam do zero
             const dia = String(date.getDate()).padStart(2, '0');
             const dateAtual = `${ano}-${mes}-${dia}`;
-            const [rows] = yield connection_1.pool.query('SELECT * FROM filial WHERE data_evento = ? and nome = ?', [dateAtual, data.nome]);
+            const [rows] = yield (yield connection_1.pool).query('SELECT * FROM filial WHERE data_evento = ? and nome = ?', [dateAtual, data.nome]);
             const filial = rows;
             return filial;
         });
         this.addFilialCofreBD = (data) => __awaiter(this, void 0, void 0, function* () {
-            const date = new Date;
-            const query = connection_1.pool.execute(`INSERT INTO filial (nome, saldo, despesa, deposito,sangria, data_evento, outras_entradas,movimentos) values (?,?,?,?,?,?,?,?)`, [data.nome, data.saldo, data.despesa, data.deposito, data.sangria, date, data.outras_entradas, data.movimentos]);
+            const date = new Date();
+            try {
+                // Inserindo os dados na tabela 'filial'
+                const [result] = yield (yield connection_1.pool).execute(`INSERT INTO filial (nome, saldo, despesa, deposito, sangria, data_evento, outras_entradas, movimentos)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [
+                    data.nome,
+                    data.saldo,
+                    data.despesa,
+                    data.deposito,
+                    data.sangria,
+                    date,
+                    data.outras_entradas,
+                    data.movimentos
+                ]);
+                // O 'result' deve conter o ID gerado ou outras informações de resposta do banco
+                const insertedId = result.insertId;
+                const fil = Object.assign(Object.assign({}, data), { id: insertedId, date: date });
+                return Object.assign(Object.assign({}, data), { id: insertedId, date: date });
+            }
+            catch (error) {
+                console.error('Erro ao adicionar filial ao banco:', error);
+                throw new Error('Erro ao adicionar filial ao banco');
+            }
         });
         this.id = id;
         this.nome = nome;
@@ -53,13 +74,55 @@ class FilialModel {
 }
 exports.FilialModel = FilialModel;
 _a = FilialModel;
+FilialModel.editFilialCofreBD = (data) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Cria a query para atualização
+        const query = `
+                UPDATE filial 
+                SET 
+                    saldo = ?, 
+                    despesa = ?, 
+                    deposito = ?, 
+                    sangria = ?, 
+                    outras_entradas = ?, 
+                    movimentos = ?
+                WHERE data_evento = ? AND nome =?  
+            `;
+        const date = new Date;
+        const ano = date.getFullYear();
+        const mes = String(date.getMonth() + 1).padStart(2, '0'); // +1 porque os meses começam do zero
+        const dia = String(date.getDate()).padStart(2, '0');
+        const dateAtual = `${ano}-${mes}-${dia}`;
+        // Executa a atualização no banco de dados
+        const [result] = yield (yield connection_1.pool).execute(query, [
+            data.saldo,
+            data.despesa,
+            data.deposito,
+            data.sangria,
+            data.outras_entradas,
+            data.movimentos,
+            dateAtual,
+            data.nome
+        ]);
+        // Verifica se algum registro foi atualizado
+        if (result.affectedRows > 0) {
+            // Retorna os dados atualizados com o novo timestamp (data_evento)
+            return true;
+        }
+        return false;
+    }
+    catch (error) {
+        console.error('Erro ao atualizar a filial:', error);
+        return false;
+    }
+});
 FilialModel.deleteCofreDB = (data) => __awaiter(void 0, void 0, void 0, function* () {
     const date = new Date;
     const ano = date.getFullYear();
     const mes = String(date.getMonth() + 1).padStart(2, '0'); // +1 porque os meses começam do zero
     const dia = String(date.getDate()).padStart(2, '0');
     const dateAtual = `${ano}-${mes}-${dia}`;
-    const saldoDeleted = yield connection_1.pool.query('DELETE FROM filial WHERE data_evento = ? AND nome =? ', [dateAtual, data]);
+    const saldoDeleted = yield (yield connection_1.pool).query('DELETE FROM filial WHERE data_evento = ? AND nome =? ', [dateAtual, data]);
     if (saldoDeleted) {
         return true;
     }
@@ -67,7 +130,7 @@ FilialModel.deleteCofreDB = (data) => __awaiter(void 0, void 0, void 0, function
 });
 FilialModel.statusFilialCofreBD = (status, id) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const query = connection_1.pool.execute(`UPDATE filial SET status = ? WHERE id = ?`, [status, id]);
+        const query = (yield connection_1.pool).execute(`UPDATE filial SET status = ? WHERE id = ?`, [status, id]);
         return true;
     }
     catch (error) {
@@ -76,9 +139,49 @@ FilialModel.statusFilialCofreBD = (status, id) => __awaiter(void 0, void 0, void
     }
 });
 FilialModel.getMovimentosDB = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    const [rows] = yield connection_1.pool.query('SELECT movimentos FROM filial WHERE id = ?', [id]);
+    const [rows] = yield (yield connection_1.pool).query('SELECT movimentos FROM filial WHERE id = ?', [id]);
     const filial = rows;
     return filial;
+});
+FilialModel.getMovimentosAtualDB = (nome) => __awaiter(void 0, void 0, void 0, function* () {
+    function formatarData(data) {
+        const ano = data.getFullYear();
+        const mes = (data.getMonth() + 1).toString().padStart(2, '0'); // Mes começa em 0, por isso adiciona 1
+        const dia = data.getDate().toString().padStart(2, '0');
+        return `${ano}-${mes}-${dia}`;
+    }
+    const dataAtual = new Date();
+    const dataFormatada = formatarData(dataAtual);
+    const [rows] = yield (yield connection_1.pool).query('SELECT movimentos FROM filial WHERE data_evento = ? AND nome =?', [dataFormatada, nome]);
+    const filial = rows;
+    return filial;
+});
+FilialModel.getLastMovimentosDB = (name) => __awaiter(void 0, void 0, void 0, function* () {
+    const [rows] = yield (yield connection_1.pool).query('SELECT movimentos ,data_evento FROM filial WHERE nome = ? ORDER BY id DESC LIMIT 1;', [name]);
+    const filial = rows;
+    const result = rows;
+    const filiaDate = result.map((row) => ({
+        data_evento: row.data_evento,
+    }));
+    function formatarData(data) {
+        const ano = data.getFullYear();
+        const mes = (data.getMonth() + 1).toString().padStart(2, '0'); // Mes começa em 0, por isso adiciona 1
+        const dia = data.getDate().toString().padStart(2, '0');
+        return `${ano}-${mes}-${dia}`;
+    }
+    const dataAtual = new Date();
+    const dataFormatadaAtual = formatarData(dataAtual);
+    const dataFormatadaBD = formatarData(filiaDate[0].data_evento);
+    if (dataFormatadaBD != dataFormatadaAtual) {
+        return filial;
+    }
+    else {
+        const [rows] = yield (yield connection_1.pool).query(`SELECT movimentos FROM filial WHERE nome = ? AND id < (SELECT MAX(id) FROM filial WHERE nome = ?) 
+        ORDER BY id DESC 
+        LIMIT 1;`, [name, name]);
+        const filial = rows;
+        return filial;
+    }
 });
 FilialModel.filterFiliaisNomeBD = (data) => __awaiter(void 0, void 0, void 0, function* () {
     // Começa com a consulta base
@@ -87,7 +190,7 @@ FilialModel.filterFiliaisNomeBD = (data) => __awaiter(void 0, void 0, void 0, fu
     query += 'and nome = ?';
     queryParams.push(data);
     // Executa a consulta com os parâmetros
-    const [rows] = yield connection_1.pool.query(query, queryParams);
+    const [rows] = yield (yield connection_1.pool).query(query, queryParams);
     const filial = rows;
     return filial;
 });
@@ -98,17 +201,39 @@ FilialModel.filterFiliaisDataBD = (data) => __awaiter(void 0, void 0, void 0, fu
     query += 'and data_evento = ?';
     queryParams.push(data);
     // Executa a consulta com os parâmetros
-    const [rows] = yield connection_1.pool.query(query, queryParams);
+    const [rows] = yield (yield connection_1.pool).query(query, queryParams);
     const filial = rows;
     return filial;
 });
 FilialModel.filterFilialAnteriorDB = (nome) => __awaiter(void 0, void 0, void 0, function* () {
-    const [rows] = yield connection_1.pool.query('SELECT saldo , data_evento FROM filial WHERE nome = ? ORDER BY id DESC LIMIT 1; ', [nome]);
+    const [rows] = yield (yield connection_1.pool).query('SELECT saldo , data_evento FROM filial WHERE nome = ? ORDER BY id DESC LIMIT 1; ', [nome]);
     const filial = rows;
-    return filial;
+    const result = rows;
+    const filiaDate = result.map((row) => ({
+        data_evento: row.data_evento,
+    }));
+    function formatarData(data) {
+        const ano = data.getFullYear();
+        const mes = (data.getMonth() + 1).toString().padStart(2, '0'); // Mes começa em 0, por isso adiciona 1
+        const dia = data.getDate().toString().padStart(2, '0');
+        return `${ano}-${mes}-${dia}`;
+    }
+    const dataAtual = new Date();
+    const dataFormatadaAtual = formatarData(dataAtual);
+    const dataFormatadaBD = formatarData(filiaDate[0].data_evento);
+    if (dataFormatadaBD != dataFormatadaAtual) {
+        return filial;
+    }
+    else {
+        const [rows] = yield (yield connection_1.pool).query(`SELECT saldo, data_evento FROM filial WHERE nome = ? AND id < (SELECT MAX(id) FROM filial WHERE nome = ?) 
+        ORDER BY id DESC 
+        LIMIT 1;`, [nome, nome]);
+        const filial = rows;
+        return filial;
+    }
 });
 FilialModel.listFiliaisBD = () => __awaiter(void 0, void 0, void 0, function* () {
-    const [rows] = yield connection_1.pool.query('SELECT * FROM filial');
+    const [rows] = yield (yield connection_1.pool).query('SELECT * FROM filial');
     const filial = rows;
     if (filial.length == 0) {
         return false;

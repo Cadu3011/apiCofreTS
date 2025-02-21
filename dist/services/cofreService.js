@@ -20,11 +20,12 @@ FilialServices.addFilialCofre = (data) => __awaiter(void 0, void 0, void 0, func
     const filial = new filialModel_1.FilialModel(data.nome, data.saldo, data.despesa, data.deposito, data.sangria, data.outras_entradas, data.movimentos);
     const conferExist = yield filial.conferExistCofre(filial);
     if (filial.conferDataFilial(filial) == true) {
-        if (conferExist != false) {
-            return false;
+        if (conferExist == false) {
+            yield filial.addFilialCofreBD(filial);
+            return true;
         }
         else {
-            yield filial.addFilialCofreBD(filial);
+            yield filialModel_1.FilialModel.editFilialCofreBD(filial);
             return true;
         }
     }
@@ -71,6 +72,20 @@ FilialServices.filterFilialAnterior = (nome) => __awaiter(void 0, void 0, void 0
 });
 FilialServices.getMovimentos = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const listFiliais = yield filialModel_1.FilialModel.getMovimentosDB(id);
+    if (listFiliais !== false) {
+        return listFiliais;
+    }
+    return false;
+});
+FilialServices.getMovimentoAtuais = (nome) => __awaiter(void 0, void 0, void 0, function* () {
+    const listFiliais = yield filialModel_1.FilialModel.getMovimentosAtualDB(nome);
+    if (listFiliais !== false) {
+        return listFiliais;
+    }
+    return false;
+});
+FilialServices.getLastMovimentos = (name) => __awaiter(void 0, void 0, void 0, function* () {
+    const listFiliais = yield filialModel_1.FilialModel.getLastMovimentosDB(name);
     if (listFiliais !== false) {
         return listFiliais;
     }
