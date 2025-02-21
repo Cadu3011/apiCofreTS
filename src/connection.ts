@@ -1,14 +1,13 @@
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv'
 dotenv.config()
+const DATABASE_URL = process.env.DATABASE_URL as string;
 
-// Configurações de conexão
-const connectionConfig = {
-  host: process.env.HOST_DATABASE,
-  user: process.env.USER_DATABASE,
-  password: process.env.SENHA_DATABASE,
-  database: process.env.DATABASE
-};
-
+async function connectDB() {
 // Cria uma conexão com o banco de dados
-export const pool = mysql.createPool(connectionConfig);
+ const pool = await mysql.createConnection(DATABASE_URL);
+
+   return pool
+}
+
+export const pool = connectDB()

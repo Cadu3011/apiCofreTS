@@ -53,7 +53,7 @@ export class FilialModel{
 
         const dateAtual = `${ano}-${mes}-${dia}`
         
-        const [rows] = await pool.query(
+        const [rows] = await (await pool).query(
             'SELECT * FROM filial WHERE data_evento = ? and nome = ?',
             [dateAtual,data.nome]
         );
@@ -83,7 +83,7 @@ export class FilialModel{
 
             const dateAtual = `${ano}-${mes}-${dia}`
             // Executa a atualização no banco de dados
-            const [result] = await pool.execute(query, [
+            const [result] = await (await pool).execute(query, [
                 data.saldo, 
                 data.despesa, 
                 data.deposito, 
@@ -115,7 +115,7 @@ export class FilialModel{
         const dia = String(date.getDate()).padStart(2, '0');
 
         const dateAtual = `${ano}-${mes}-${dia}`
-        const saldoDeleted = await pool.query(
+        const saldoDeleted = await (await pool).query(
             'DELETE FROM filial WHERE data_evento = ? AND nome =? ',
             [dateAtual,data]
         );
@@ -130,7 +130,7 @@ export class FilialModel{
         
         try {
             // Inserindo os dados na tabela 'filial'
-            const [result] = await pool.execute(
+            const [result] = await (await pool).execute(
                 `INSERT INTO filial (nome, saldo, despesa, deposito, sangria, data_evento, outras_entradas, movimentos)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
@@ -162,7 +162,7 @@ export class FilialModel{
     };
     static statusFilialCofreBD = async(status:string, id:number):Promise<boolean>=>{
         try {
-            const query = pool.execute(`UPDATE filial SET status = ? WHERE id = ?`,[status,id])
+            const query = (await pool).execute(`UPDATE filial SET status = ? WHERE id = ?`,[status,id])
             return true
         }catch(error){
             console.error('Erro ao executar a consulta:', error);
@@ -170,7 +170,7 @@ export class FilialModel{
         }
     }
     static getMovimentosDB= async(id:any):Promise<FilialData[] | false>=>{
-        const [rows] = await pool.query(
+        const [rows] = await (await pool).query(
             'SELECT movimentos FROM filial WHERE id = ?',
             [id]
         );
@@ -188,7 +188,7 @@ export class FilialModel{
         
         const dataAtual = new Date();
         const dataFormatada = formatarData(dataAtual);
-        const [rows] = await pool.query(
+        const [rows] = await (await pool).query(
             'SELECT movimentos FROM filial WHERE data_evento = ? AND nome =?',
             [dataFormatada,nome]
         );
@@ -196,7 +196,7 @@ export class FilialModel{
         return filial;
     }
     static getLastMovimentosDB= async(name:string):Promise<FilialData[] | false>=>{
-        const [rows] = await pool.query(
+        const [rows] = await (await pool).query(
             'SELECT movimentos ,data_evento FROM filial WHERE nome = ? ORDER BY id DESC LIMIT 1;',
             [name]
         );
@@ -219,7 +219,7 @@ export class FilialModel{
         if(dataFormatadaBD != dataFormatadaAtual){
             return filial;
         }else{
-            const [rows] = await pool.query(
+            const [rows] = await (await pool).query(
                 `SELECT movimentos FROM filial WHERE nome = ? AND id < (SELECT MAX(id) FROM filial WHERE nome = ?) 
         ORDER BY id DESC 
         LIMIT 1;`,
@@ -239,7 +239,7 @@ export class FilialModel{
               
           
             // Executa a consulta com os parâmetros
-            const [rows] = await pool.query(query, queryParams);
+            const [rows] = await (await pool).query(query, queryParams);
             const filial = rows as FilialData[]
             return filial;
     }
@@ -253,12 +253,12 @@ export class FilialModel{
           
       
         // Executa a consulta com os parâmetros
-        const [rows] = await pool.query(query, queryParams);
+        const [rows] = await (await pool).query(query, queryParams);
         const filial = rows as FilialData[]
         return filial;
     };
     static filterFilialAnteriorDB = async (nome:String): Promise<FilialData[] | false> => {
-          const [rows] = await pool.query(
+          const [rows] = await (await pool).query(
             'SELECT saldo , data_evento FROM filial WHERE nome = ? ORDER BY id DESC LIMIT 1; ',
             [nome]
         );
@@ -281,7 +281,7 @@ export class FilialModel{
         if(dataFormatadaBD != dataFormatadaAtual){
             return filial;
         }else{
-            const [rows] = await pool.query(
+            const [rows] = await (await pool).query(
                 `SELECT saldo, data_evento FROM filial WHERE nome = ? AND id < (SELECT MAX(id) FROM filial WHERE nome = ?) 
         ORDER BY id DESC 
         LIMIT 1;`,
@@ -293,7 +293,7 @@ export class FilialModel{
         
     };
     static listFiliaisBD = async ():Promise<FilialData[] | false>=>{
-        const [rows] = await pool.query('SELECT * FROM filial')
+        const [rows] = await (await pool).query('SELECT * FROM filial')
         const filial = rows as FilialData[]
         if((filial as any[]).length == 0){
             return false
